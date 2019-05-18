@@ -3,6 +3,7 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 users = [];
+characters = [];
 connections = [];
 
 server.listen(process.env.PORT || 3000);
@@ -26,7 +27,8 @@ io.sockets.on('connection', function(socket){
 
   //Send message
   socket.on('send message', function(data){
-    io.sockets.emit('new message', {msg: data, user:socket.username});
+    io.sockets.emit('new character', {msg: data, user:socket.username});
+    console.log(data);
   });
 
   // New User
@@ -37,7 +39,20 @@ io.sockets.on('connection', function(socket){
     updateUsernames();
   });
 
+  //Send message
+  socket.on('send character', function(data){
+    if (!characters.includes(data)){
+      characters.push(data);
+    }
+    updateCharacters();
+    console.log(data);
+  });
+
   function updateUsernames(){
     io.sockets.emit('get users', users);
   };
+
+  function updateCharacters(){
+    io.sockets.emit('get characters', characters);
+  }
 });
