@@ -17,6 +17,10 @@
         #characterSelectArea {
             display: none;
         }
+
+        #game {
+            display: none;
+        }
     </style>
 </head>
 
@@ -36,15 +40,23 @@
         </div>
 
         <div id="messageArea" class="row">
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <div class="well">
                     <h3>Online Users</h3>
                     <ul class="list-group" id="users"></ul>
                 </div>
             </div>
+            <div class="col-md-6">
+                <div class="well">
+                    <h3>Selected Characters</h3>
+                    <ul class="list-group" id="characterSelected"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="characterSelectArea" class="row">
             <div class="col-md-8">
                 <div class="chat" id="chat"></div>
-
                 <form id="messageForm">
                     <div class="form-group">
                         <label>Select Characters</label>
@@ -63,24 +75,38 @@
                     </div>
                 </form>
             </div>
-        </div>
-
-        <div id="characterSelectArea" class="row">
-            <div class="col-md-4">
-                <div class="well">
-                    <h3>Selected Characters</h3>
-                    <ul class="list-group" id="characterSelected"></ul>
-                </div>
-            </div>
             <div id="Play">
                 <input type="button" class="btn btn-primary" id="PlayButton" value="Play" />
             </div>
         </div>
 
+        <div id="game" class="row">
+            <div class="col-md-12">
+                <div class="well">
+                    <h3>Game</h3>
+                </div>
+            </div>
+            <ul class="col-md-4" id="gameArea">
+                <div class="well">
+                    <ul class="list-group" id="gameArea2"></ul>
+                </div>
+            </ul>
+        </div>
+
     </div>
 
     <script>
-        var characters = [];
+                
+        function shuffle(a) {
+        var j, x, i;
+        for (i = a.length - 1; i > 0; i--) {
+            j = Math.floor(Math.random() * (i + 1));
+            x = a[i];
+            a[i] = a[j];
+            a[j] = x;
+        }
+        return a;
+        }
 
         $(function () {
             var socket = io.connect();
@@ -96,6 +122,11 @@
             var $userForm = $('#userForm');
             var $users = $('#users');
             var $username = $('#username');
+            var $game = $('#game');
+            var $gameArea = $('#gameArea');
+            var $gameArea2 = $('#gameArea2');
+            var $Play = $('#Play');
+            var $PlayButton = $('#PlayButton');
 
             var $MerlinButton = $('#MerlinButton');
             var $PercivalButton = $('#PercivalButton');
@@ -109,6 +140,14 @@
             var $Servant3Button = $('#Servant3Button');
             var $Servant4Button = $('#Servant4Button');
 
+            var user = '';
+            var char = '';
+            var usercharacter = {};
+            var characteruser = {};
+            var characters = [];
+            var evil = ['Morgana', 'Assassin', 'Mordred', 'Oberon', 'Minion'];
+
+            // Character Buttons
             $messageForm.submit(function (e) {
                 e.preventDefault();
                 socket.emit('send message', $message.val());
@@ -169,9 +208,9 @@
                 socket.emit('send character', 'Servant4');
             });
 
-            socket.on('new character', function (data) {
-                characters.push(data.msg);
-                $characterSelected.append('<li class="list-group-item">' + data.msg + '</li>');
+            $PlayButton.click(function (e) {
+                e.preventDefault();
+                socket.emit('start game');
             });
 
             $userForm.submit(function (e) {
@@ -181,8 +220,10 @@
                         $userFormArea.hide();
                         $messageArea.show();
                         $characterSelectArea.show();
+                        socket.emit('send character', 'Merlin');
                     }
                 });
+                user = $username.val();
                 $username.val('');
             });
 
@@ -200,6 +241,41 @@
                     html += '<li class="list-group-item">' + data[i] + '</li>';
                 }
                 $characterSelected.html(html);
+            });
+
+            socket.on('start game', function (data) {
+                $characterSelectArea.hide();
+                $game.show();
+                usercharacter = data[0];
+                characteruser = data[1];
+                char = usercharacter[user];
+                html = '<h3>Player: '+user+'</h3><h3>Character: '+char+'</h3>';
+                evil = shuffle(evil);
+                if (evil.includes(char) && char != 'Oberon'){
+                    html += '<h3>Thumbs:</h3>';
+                    for (var usr in usercharacter){
+                        if (evil.includes(usercharacter[usr]) && usercharacter[usr] != 'Oberon' && usercharacter[usr] != char) {
+                            html += '<li class="list-group-item">'+usr+'</li>';
+                        };
+                    };
+                }; 
+                if (char === 'Merlin'){
+                    html += '<h3>Thumbs:</h3>';
+                    for (var usr in usercharacter){
+                        if (evil.includes(usercharacter[usr]) && usercharacter[usr] != 'Mordred') {
+                            html += '<li class="list-group-item">'+usr+'</li>';
+                        };
+                    };
+                };
+                if (char === 'Percival'){
+                    html += '<h3>Thumbs:</h3>';
+                    for (var usr in usercharacter){
+                        if (usercharacter[usr] === 'Merlin' || usercharacter[usr] === 'Morgana') {
+                            html += '<li class="list-group-item">'+usr+'</li>';
+                        };
+                    };
+                }
+                $gameArea2.html(html);
             });
         });
     </script>

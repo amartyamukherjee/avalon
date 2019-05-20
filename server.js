@@ -5,6 +5,19 @@ var io = require('socket.io').listen(server);
 users = [];
 characters = [];
 connections = [];
+characteruser = {};
+usercharacter = {};
+
+function shuffle(a) {
+  var j, x, i;
+  for (i = a.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      x = a[i];
+      a[i] = a[j];
+      a[j] = x;
+  }
+  return a;
+}
 
 server.listen(process.env.PORT || 3000);
 console.log('Server running...');
@@ -48,11 +61,25 @@ io.sockets.on('connection', function(socket){
     console.log(data);
   });
 
+  //Start game
+  socket.on('start game', function(){
+    characters = shuffle(characters);
+    for (i=0; i<users.length; i++) {
+      characteruser[characters[i]] = users[i];
+      usercharacter[users[i]] = characters[i];
+    }
+    updateGame();
+  });
+
   function updateUsernames(){
     io.sockets.emit('get users', users);
   };
 
   function updateCharacters(){
     io.sockets.emit('get characters', characters);
-  }
+  };
+
+  function updateGame(){
+    io.sockets.emit('start game', [usercharacter,characteruser]);
+  };
 });
