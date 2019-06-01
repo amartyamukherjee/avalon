@@ -71,6 +71,10 @@ io.sockets.on('connection', function(socket){
     updateGame();
   });
 
+  socket.on('select character', function(data){
+    console.log(data);
+  });
+
   function updateUsernames(){
     io.sockets.emit('get users', users);
   };
@@ -80,6 +84,6 @@ io.sockets.on('connection', function(socket){
   };
 
   function updateGame(){
-    io.sockets.emit('start game', [usercharacter,characteruser]);
+    io.sockets.emit('start game', [usercharacter,characteruser,users]);
   };
 });
